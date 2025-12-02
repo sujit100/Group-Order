@@ -129,7 +129,7 @@ export default function OrderStatusPage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">Order Summary</h2>
           <div className="space-y-6">
-            {Object.entries(groupedByUser).map(([email, { name, items }]) => (
+            {Object.entries(groupedByUser).map(([email, { name, items }]: [string, any]) => (
               <div key={email}>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">{name}&apos;s Items</h3>
                 <div className="space-y-2">

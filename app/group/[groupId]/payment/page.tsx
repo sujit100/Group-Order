@@ -215,7 +215,7 @@ export default function PaymentPage() {
           <div className="bg-white rounded-lg shadow-md p-6 mt-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Summary</h2>
             <div className="space-y-3">
-              {userSummaries.map((summary) => (
+              {Object.entries(userSummaries).map((summary: any) => (
                 <div key={summary.id} className="flex justify-between items-center">
                   <span className="text-gray-700">{summary.user_name}</span>
                   <span className="font-semibold text-gray-900">

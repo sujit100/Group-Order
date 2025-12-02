@@ -132,7 +132,7 @@ export default function CheckoutPage() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Summary</h2>
-              {Object.entries(groupedByUser).map(([email, { name, items }]) => (
+              {Object.entries(groupedByUser).map(([email, { name, items }]: [string, any]) => (
                 <div key={email} className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">{name}&apos;s Items</h3>
                   <div className="space-y-2">

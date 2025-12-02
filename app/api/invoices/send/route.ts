@@ -74,10 +74,10 @@ export async function POST(request: NextRequest) {
     const summaries = userSummaries as any[]
 
     // Send invoice to each user
-    const emailPromises = summaries.map(async (summary) => {
+    const emailPromises = (summaries as any[]).map(async (summary: any) => {
       // Get items for this user
-      const userItems = items.filter(
-        (item) => item.added_by_email === summary.user_email
+      const userItems = (items as any[]).filter(
+        (item: any) => item.added_by_email === summary.user_email
       )
 
       const invoiceData: InvoiceData = {

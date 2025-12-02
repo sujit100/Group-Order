@@ -71,7 +71,7 @@ export default function CartPage() {
         ) : (
           <>
             <div className="space-y-6 mb-8">
-              {Object.entries(groupedByUser).map(([email, { name, items }]) => (
+              {Object.entries(groupedByUser).map(([email, { name, items }]: [string, any]) => (
                 <div key={email}>
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     {name}&apos;s Items
