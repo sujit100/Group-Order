@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getOrderByGroup } from '@/lib/supabase/orders'
 import { getOrderItems, getUserOrderSummaries } from '@/lib/supabase/orders'
@@ -19,19 +19,7 @@ export default function OrderStatusPage() {
   const [loading, setLoading] = useState(true)
   const [userInfo, setUserInfo] = useState<{ email: string; firstName: string } | null>(null)
 
-  useEffect(() => {
-    const stored = localStorage.getItem(`group_${groupId}_user`)
-    if (stored) {
-      setUserInfo(JSON.parse(stored))
-    } else {
-      router.push(`/join-group`)
-      return
-    }
-
-    loadOrderData()
-  }, [groupId, router])
-
-  const loadOrderData = async () => {
+  const loadOrderData = useCallback(async () => {
     try {
       const [orderData, groupData] = await Promise.all([
         getOrderByGroup(groupId),
@@ -43,12 +31,14 @@ export default function OrderStatusPage() {
         return
       }
 
+      const ord = orderData as any
+
       setOrder(orderData)
       setGroup(groupData)
 
       const [items, summaries] = await Promise.all([
-        getOrderItems(orderData.id),
-        getUserOrderSummaries(orderData.id),
+        getOrderItems(ord.id),
+        getUserOrderSummaries(ord.id),
       ])
 
       setOrderItems(items)
@@ -58,7 +48,19 @@ export default function OrderStatusPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [groupId, router])
+
+  useEffect(() => {
+    const stored = localStorage.getItem(`group_${groupId}_user`)
+    if (stored) {
+      setUserInfo(JSON.parse(stored))
+    } else {
+      router.push(`/join-group`)
+      return
+    }
+
+    loadOrderData()
+  }, [groupId, router, loadOrderData])
 
   if (loading || !userInfo) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>
@@ -129,7 +131,7 @@ export default function OrderStatusPage() {
           <div className="space-y-6">
             {Object.entries(groupedByUser).map(([email, { name, items }]) => (
               <div key={email}>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">{name}'s Items</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{name}&apos;s Items</h3>
                 <div className="space-y-2">
                   {items.map((item) => {
                     const itemTotal = item.price * item.quantity

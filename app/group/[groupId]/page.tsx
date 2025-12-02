@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getGroup } from '@/lib/supabase/groups'
 import { getGroupRestaurant } from '@/lib/supabase/restaurants'
@@ -15,20 +15,10 @@ export default function GroupDashboardPage() {
   const [restaurant, setRestaurant] = useState<{ restaurantId: string | null; restaurantName: string | null } | null>(null)
   const [loading, setLoading] = useState(true)
   const [userInfo, setUserInfo] = useState<{ email: string; firstName: string } | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [showShareOptions, setShowShareOptions] = useState(false)
 
-  useEffect(() => {
-    const stored = localStorage.getItem(`group_${groupId}_user`)
-    if (stored) {
-      setUserInfo(JSON.parse(stored))
-    } else {
-      router.push(`/join-group`)
-      return
-    }
-
-    loadGroupData()
-  }, [groupId, router])
-
-  const loadGroupData = async () => {
+  const loadGroupData = useCallback(async () => {
     try {
       const [groupData, restaurantData] = await Promise.all([
         getGroup(groupId),
@@ -41,7 +31,19 @@ export default function GroupDashboardPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [groupId])
+
+  useEffect(() => {
+    const stored = localStorage.getItem(`group_${groupId}_user`)
+    if (stored) {
+      setUserInfo(JSON.parse(stored))
+    } else {
+      router.push(`/join-group`)
+      return
+    }
+
+    loadGroupData()
+  }, [groupId, router, loadGroupData])
 
   if (loading || !userInfo) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>
@@ -63,8 +65,6 @@ export default function GroupDashboardPage() {
   const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/join-group?code=${group.code}` : ''
   const groupUrl = typeof window !== 'undefined' ? `${window.location.origin}/group/${groupId}` : ''
   const canShare = typeof navigator !== 'undefined' && 'share' in navigator
-  const [copied, setCopied] = useState(false)
-  const [showShareOptions, setShowShareOptions] = useState(false)
 
   const handleShare = async () => {
     if (canShare && shareUrl) {

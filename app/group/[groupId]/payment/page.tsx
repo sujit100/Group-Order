@@ -1,8 +1,9 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getGroup } from '@/lib/supabase/groups'
 import { getUserOrderSummaries } from '@/lib/supabase/orders'
 import { getOrderByGroup } from '@/lib/supabase/orders'
@@ -23,19 +24,7 @@ export default function PaymentPage() {
   const [venmoHandle, setVenmoHandle] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    const stored = localStorage.getItem(`group_${groupId}_user`)
-    if (stored) {
-      setUserInfo(JSON.parse(stored))
-    } else {
-      router.push(`/join-group`)
-      return
-    }
-
-    loadPaymentData()
-  }, [groupId, router])
-
-  const loadPaymentData = async () => {
+  const loadPaymentData = useCallback(async () => {
     try {
       const [groupData, orderData] = await Promise.all([
         getGroup(groupId),
@@ -64,7 +53,19 @@ export default function PaymentPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [groupId])
+
+  useEffect(() => {
+    const stored = localStorage.getItem(`group_${groupId}_user`)
+    if (stored) {
+      setUserInfo(JSON.parse(stored))
+    } else {
+      router.push(`/join-group`)
+      return
+    }
+
+    loadPaymentData()
+  }, [groupId, router, loadPaymentData])
 
   const handleSaveVenmo = async () => {
     if (!venmoHandle.trim()) {
@@ -191,7 +192,7 @@ export default function PaymentPage() {
             <div className="flex flex-col md:flex-row gap-8 items-center">
               {qrCode && (
                 <div className="text-center">
-                  <img src={qrCode} alt="Venmo QR Code" className="w-64 h-64 mx-auto mb-4" />
+                  <Image src={qrCode} alt="Venmo QR Code" width={256} height={256} className="w-64 h-64 mx-auto mb-4" />
                   <p className="text-sm text-gray-600">Scan with Venmo app</p>
                 </div>
               )}

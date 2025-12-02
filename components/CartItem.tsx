@@ -71,7 +71,7 @@ export default function CartItem({ item, currentUserEmail, addedByEmail, onUpdat
           )}
           {item.special_instructions && (
             <p className="text-sm text-gray-700 italic mb-2">
-              "{item.special_instructions}"
+              &ldquo;{item.special_instructions}&rdquo;
             </p>
           )}
           <p className="text-sm text-indigo-600">

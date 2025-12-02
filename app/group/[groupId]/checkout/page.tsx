@@ -134,7 +134,7 @@ export default function CheckoutPage() {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Summary</h2>
               {Object.entries(groupedByUser).map(([email, { name, items }]) => (
                 <div key={email} className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">{name}'s Items</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">{name}&apos;s Items</h3>
                   <div className="space-y-2">
                     {items.map((item) => {
                       const itemTotal = item.price * item.quantity

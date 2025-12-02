@@ -26,13 +26,15 @@ export default function CreateGroupPage() {
         firstName: firstName.trim(),
       })
 
+      const grp = group as any
+
       // Store user info in localStorage for session
-      localStorage.setItem(`group_${group.id}_user`, JSON.stringify({
+      localStorage.setItem(`group_${grp.id}_user`, JSON.stringify({
         email: email.trim(),
         firstName: firstName.trim(),
       }))
 
-      router.push(`/group/${group.id}`)
+      router.push(`/group/${grp.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create group')
       setLoading(false)

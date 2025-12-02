@@ -32,12 +32,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const ord = order as any
+
     // Get group details (for restaurant name and delivery ETA)
     const { data: group } = await supabase
       .from('groups')
       .select('restaurant_name, delivery_eta')
       .eq('id', groupId)
       .single()
+
+    const grp = group as any
 
     // Get order items
     const { data: orderItems } = await supabase
@@ -52,6 +56,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const items = orderItems as any[]
+
     // Get user summaries
     const { data: userSummaries } = await supabase
       .from('user_order_summary')
@@ -65,19 +71,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const summaries = userSummaries as any[]
+
     // Send invoice to each user
-    const emailPromises = userSummaries.map(async (summary) => {
+    const emailPromises = summaries.map(async (summary) => {
       // Get items for this user
-      const userItems = orderItems.filter(
+      const userItems = items.filter(
         (item) => item.added_by_email === summary.user_email
       )
 
       const invoiceData: InvoiceData = {
         userName: summary.user_name,
         userEmail: summary.user_email,
-        orderId: order.id,
-        restaurantName: group?.restaurant_name || null,
-        orderDate: order.ordered_at,
+        orderId: ord.id,
+        restaurantName: grp?.restaurant_name || null,
+        orderDate: ord.ordered_at,
         items: userItems.map((item) => ({
           name: item.item_name,
           quantity: item.quantity,
@@ -87,14 +95,14 @@ export async function POST(request: NextRequest) {
         taxAmount: summary.tax_amount,
         tipAmount: summary.tip_amount,
         totalAmount: summary.total_amount,
-        deliveryEta: group?.delivery_eta || null,
+        deliveryEta: grp?.delivery_eta || null,
       }
 
       try {
         await sendInvoiceEmail(invoiceData)
 
         // Update summary to mark invoice as sent
-        await supabase
+        await (supabase as any)
           .from('user_order_summary')
           .update({
             invoice_sent: true,
@@ -110,12 +118,12 @@ export async function POST(request: NextRequest) {
     await Promise.all(emailPromises)
 
     // Mark order as invoices sent
-    await supabase
+    await (supabase as any)
       .from('orders')
       .update({ invoices_sent: true })
       .eq('id', orderId)
 
-    return NextResponse.json({ success: true, sent: userSummaries.length })
+    return NextResponse.json({ success: true, sent: summaries.length })
   } catch (error) {
     console.error('Error sending invoices:', error)
     return NextResponse.json(
