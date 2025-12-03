@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createGroup } from '@/lib/supabase/groups'
 
@@ -10,6 +10,22 @@ export default function CreateGroupPage() {
   const [firstName, setFirstName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Check if user info was passed from landing page
+    const tempUser = localStorage.getItem('temp_user')
+    if (tempUser) {
+      try {
+        const userData = JSON.parse(tempUser)
+        setEmail(userData.email || '')
+        setFirstName(userData.firstName || '')
+        // Clear temp storage after using it
+        localStorage.removeItem('temp_user')
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
