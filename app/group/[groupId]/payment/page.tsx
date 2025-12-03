@@ -9,13 +9,17 @@ import { getUserOrderSummaries } from '@/lib/supabase/orders'
 import { getOrderByGroup } from '@/lib/supabase/orders'
 import { generateVenmoQRCode, formatVenmoHandle } from '@/lib/venmo'
 import { createClient } from '@/lib/supabase/client'
+import type { Database } from '@/types/database'
+
+type GroupType = Database['public']['Tables']['groups']['Row']
+type GroupUpdate = Database['public']['Tables']['groups']['Update']
 
 export default function PaymentPage() {
   const params = useParams()
   const router = useRouter()
   const groupId = params.groupId as string
 
-  const [group, setGroup] = useState<any>(null)
+  const [group, setGroup] = useState<GroupType | null>(null)
   const [order, setOrder] = useState<any>(null)
   const [userSummaries, setUserSummaries] = useState<any[]>([])
   const [qrCode, setQrCode] = useState<string | null>(null)
@@ -29,12 +33,12 @@ export default function PaymentPage() {
       const [groupData, orderData] = await Promise.all([
         getGroup(groupId),
         getOrderByGroup(groupId),
-      ])
+      ]) as [GroupType, any]
 
       setGroup(groupData)
       setOrder(orderData)
 
-      if (groupData?.venmo_handle) {
+      if (groupData && groupData.venmo_handle) {
         setVenmoHandle(groupData.venmo_handle)
         try {
           const qr = await generateVenmoQRCode(groupData.venmo_handle)
@@ -78,11 +82,11 @@ export default function PaymentPage() {
       const formattedHandle = formatVenmoHandle(venmoHandle)
       const supabase = createClient()
 
-      const { error } = await supabase
-        .from('groups')
+      const { error } = await (supabase
+        .from('groups') as any)
         .update({
           venmo_handle: formattedHandle,
-          checkout_user_email: userInfo?.email,
+          checkout_user_email: userInfo?.email || null,
         })
         .eq('id', groupId)
 
@@ -94,12 +98,14 @@ export default function PaymentPage() {
       const qr = await generateVenmoQRCode(formattedHandle)
 
       // Save QR code to database
-      await supabase
-        .from('groups')
+      await (supabase
+        .from('groups') as any)
         .update({ venmo_qr_code: qr })
         .eq('id', groupId)
 
-      setGroup({ ...group, venmo_handle: formattedHandle })
+      if (group) {
+        setGroup({ ...group, venmo_handle: formattedHandle })
+      }
       setQrCode(qr)
     } catch (error) {
       console.error('Failed to save Venmo handle:', error)

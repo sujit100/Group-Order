@@ -60,19 +60,22 @@ export async function completeCheckout({
   const calculation = calculateOrder(userSubtotals, taxRate, tipRate)
 
   // Create order
-  const { data: order, error: orderError } = await supabase
-    .from('orders')
-    .insert({
-      group_id: groupId,
-      status: 'placed',
-      subtotal: calculation.subtotal,
-      tax_rate: taxRate,
-      tax_amount: calculation.taxAmount,
-      tip_rate: tipRate,
-      tip_amount: calculation.tipAmount,
-      total_amount: calculation.totalAmount,
-      invoices_sent: false,
-    })
+  type OrderInsert = Database['public']['Tables']['orders']['Insert']
+  const orderInsert: OrderInsert = {
+    group_id: groupId,
+    status: 'placed',
+    subtotal: calculation.subtotal,
+    tax_rate: taxRate,
+    tax_amount: calculation.taxAmount,
+    tip_rate: tipRate,
+    tip_amount: calculation.tipAmount,
+    total_amount: calculation.totalAmount,
+    invoices_sent: false,
+  }
+  
+  const { data: order, error: orderError } = await (supabase
+    .from('orders') as any)
+    .insert(orderInsert)
     .select()
     .single()
 
@@ -81,7 +84,8 @@ export async function completeCheckout({
   }
 
   // Create order items
-  const orderItems = cartItems.map((item) => ({
+  type OrderItemInsert = Database['public']['Tables']['order_items']['Insert']
+  const orderItems: OrderItemInsert[] = cartItems.map((item) => ({
     order_id: order.id,
     added_by_email: item.added_by_email,
     added_by_name: item.added_by_name,
@@ -90,8 +94,8 @@ export async function completeCheckout({
     price: item.price,
   }))
 
-  const { error: itemsError } = await supabase
-    .from('order_items')
+  const { error: itemsError } = await (supabase
+    .from('order_items') as any)
     .insert(orderItems)
 
   if (itemsError) {
@@ -99,7 +103,8 @@ export async function completeCheckout({
   }
 
   // Create user order summaries for invoices
-  const summaries = calculation.userSummaries.map((summary) => ({
+  type UserOrderSummaryInsert = Database['public']['Tables']['user_order_summary']['Insert']
+  const summaries: UserOrderSummaryInsert[] = calculation.userSummaries.map((summary) => ({
     order_id: order.id,
     user_email: summary.userEmail,
     user_name: summary.userName,
@@ -110,8 +115,8 @@ export async function completeCheckout({
     invoice_sent: false,
   }))
 
-  const { error: summariesError } = await supabase
-    .from('user_order_summary')
+  const { error: summariesError } = await (supabase
+    .from('user_order_summary') as any)
     .insert(summaries)
 
   if (summariesError) {
@@ -119,8 +124,8 @@ export async function completeCheckout({
   }
 
   // Update group status
-  const { error: groupError } = await supabase
-    .from('groups')
+  const { error: groupError } = await (supabase
+    .from('groups') as any)
     .update({
       status: 'ordered',
       order_total: calculation.totalAmount,

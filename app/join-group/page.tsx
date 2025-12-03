@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { joinGroup } from '@/lib/supabase/groups'
 
-export default function JoinGroupPage() {
+function JoinGroupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [code, setCode] = useState('')
@@ -31,11 +31,13 @@ export default function JoinGroupPage() {
         throw new Error('Please fill in all fields')
       }
 
-      const { group } = await joinGroup({
+      const result = await joinGroup({
         code: code.trim().toUpperCase(),
         email: email.trim(),
         firstName: firstName.trim(),
       })
+      
+      const group = result.group as { id: string; code: string }
 
       // Store user info in localStorage for session
       localStorage.setItem(`group_${group.id}_user`, JSON.stringify({
@@ -129,5 +131,17 @@ export default function JoinGroupPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function JoinGroupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="text-center">Loading...</div>
+      </div>
+    }>
+      <JoinGroupForm />
+    </Suspense>
   )
 }

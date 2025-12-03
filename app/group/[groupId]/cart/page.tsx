@@ -5,6 +5,9 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRealtimeCart } from '@/hooks/useRealtimeCart'
 import CartItem from '@/components/CartItem'
+import type { Database } from '@/types/database'
+
+type CartItemType = Database['public']['Tables']['cart_items']['Row']
 
 export default function CartPage() {
   const params = useParams()
@@ -33,12 +36,12 @@ export default function CartPage() {
     if (!acc[item.added_by_email]) {
       acc[item.added_by_email] = {
         name: item.added_by_name,
-        items: [],
+        items: [] as CartItemType[],
       }
     }
     acc[item.added_by_email].items.push(item)
     return acc
-  }, {} as Record<string, { name: string; items: typeof cartItems }>)
+  }, {} as Record<string, { name: string; items: CartItemType[] }>)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -71,13 +74,13 @@ export default function CartPage() {
         ) : (
           <>
             <div className="space-y-6 mb-8">
-              {Object.entries(groupedByUser).map(([email, { name, items }]: [string, any]) => (
+              {Object.entries(groupedByUser).map(([email, { name, items }]) => (
                 <div key={email}>
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     {name}&apos;s Items
                   </h2>
                   <div className="space-y-4">
-                    {items.map((item) => (
+                    {items.map((item: CartItemType) => (
                       <CartItem
                         key={item.id}
                         item={item}

@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { useRealtimeCart } from '@/hooks/useRealtimeCart'
 import { completeCheckout } from '@/lib/supabase/checkout'
 import TaxTipInput from '@/components/TaxTipInput'
+import type { Database } from '@/types/database'
+
+type CartItemType = Database['public']['Tables']['cart_items']['Row']
 
 export default function CheckoutPage() {
   const params = useParams()
@@ -41,12 +44,12 @@ export default function CheckoutPage() {
     if (!acc[item.added_by_email]) {
       acc[item.added_by_email] = {
         name: item.added_by_name,
-        items: [],
+        items: [] as CartItemType[],
       }
     }
     acc[item.added_by_email].items.push(item)
     return acc
-  }, {} as Record<string, { name: string; items: typeof cartItems }>)
+  }, {} as Record<string, { name: string; items: CartItemType[] }>)
 
   const handleCheckout = async () => {
     if (cartItems.length === 0) {
@@ -132,11 +135,11 @@ export default function CheckoutPage() {
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Summary</h2>
-              {Object.entries(groupedByUser).map(([email, { name, items }]: [string, any]) => (
+              {Object.entries(groupedByUser).map(([email, { name, items }]) => (
                 <div key={email} className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-2">{name}&apos;s Items</h3>
                   <div className="space-y-2">
-                    {items.map((item) => {
+                    {items.map((item: CartItemType) => {
                       const itemTotal = item.price * item.quantity
                       return (
                         <div key={item.id} className="flex justify-between text-sm">

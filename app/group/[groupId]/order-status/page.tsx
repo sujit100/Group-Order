@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { getOrderByGroup } from '@/lib/supabase/orders'
 import { getOrderItems, getUserOrderSummaries } from '@/lib/supabase/orders'
 import { getGroup } from '@/lib/supabase/groups'
+import type { Database } from '@/types/database'
+
+type OrderItemType = Database['public']['Tables']['order_items']['Row']
 
 export default function OrderStatusPage() {
   const params = useParams()
@@ -82,16 +85,21 @@ export default function OrderStatusPage() {
     )
   }
 
+  type GroupedUserItems = {
+    name: string
+    items: OrderItemType[]
+  }
+  
   const groupedByUser = orderItems.reduce((acc, item) => {
     if (!acc[item.added_by_email]) {
       acc[item.added_by_email] = {
         name: item.added_by_name,
-        items: [],
+        items: [] as OrderItemType[],
       }
     }
     acc[item.added_by_email].items.push(item)
     return acc
-  }, {} as Record<string, { name: string; items: typeof orderItems }>)
+  }, {} as Record<string, GroupedUserItems>)
 
   const statusLabels: Record<string, string> = {
     placed: 'Order Placed',
@@ -129,11 +137,11 @@ export default function OrderStatusPage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-4">Order Summary</h2>
           <div className="space-y-6">
-            {Object.entries(groupedByUser).map(([email, { name, items }]: [string, any]) => (
+            {(Object.entries(groupedByUser) as [string, GroupedUserItems][]).map(([email, { name, items }]) => (
               <div key={email}>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">{name}&apos;s Items</h3>
                 <div className="space-y-2">
-                  {items.map((item) => {
+                  {items.map((item: OrderItemType) => {
                     const itemTotal = item.price * item.quantity
                     return (
                       <div key={item.id} className="flex justify-between text-sm pl-4">

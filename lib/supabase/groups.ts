@@ -1,5 +1,6 @@
 import { createClient } from './client'
 import { generateGroupCode } from '@/lib/utils/code-generator'
+import type { Database } from '@/types/database'
 
 export interface CreateGroupParams {
   email: string
@@ -44,27 +45,36 @@ export async function createGroup({ email, firstName }: CreateGroupParams) {
   }
   
   // Create the group
-  const { data: group, error: groupError } = await supabase
-    .from('groups')
-    .insert({
-      code,
-      status: 'browsing',
-    })
+  type GroupInsert = Database['public']['Tables']['groups']['Insert']
+  type GroupRow = Database['public']['Tables']['groups']['Row']
+  const groupInsert: GroupInsert = {
+    code,
+    status: 'browsing',
+  }
+  
+  const { data: groupData, error: groupError } = await (supabase
+    .from('groups') as any)
+    .insert(groupInsert)
     .select()
     .single()
   
-  if (groupError || !group) {
+  if (groupError || !groupData) {
     throw new Error(`Failed to create group: ${groupError?.message}`)
   }
   
+  const group = groupData as GroupRow
+  
   // Add the creator as a member
-  const { error: memberError } = await supabase
-    .from('group_members')
-    .insert({
-      group_id: group.id,
-      email,
-      first_name: firstName,
-    })
+  type GroupMemberInsert = Database['public']['Tables']['group_members']['Insert']
+  const memberInsert: GroupMemberInsert = {
+    group_id: group.id,
+    email,
+    first_name: firstName,
+  }
+  
+  const { error: memberError } = await (supabase
+    .from('group_members') as any)
+    .insert(memberInsert)
   
   if (memberError) {
     throw new Error(`Failed to add member: ${memberError.message}`)
@@ -91,10 +101,13 @@ export async function joinGroup({ code, email, firstName }: JoinGroupParams) {
   }
   
   // Check if user is already a member
+  type GroupRow = Database['public']['Tables']['groups']['Row']
+  const typedGroup = group as GroupRow
+  
   const { data: existingMember } = await supabase
     .from('group_members')
     .select('id')
-    .eq('group_id', group.id)
+    .eq('group_id', typedGroup.id)
     .eq('email', email)
     .single()
   
@@ -103,19 +116,22 @@ export async function joinGroup({ code, email, firstName }: JoinGroupParams) {
   }
   
   // Add user as a member
-  const { error: memberError } = await supabase
-    .from('group_members')
-    .insert({
-      group_id: group.id,
-      email,
-      first_name: firstName,
-    })
+  type GroupMemberInsert = Database['public']['Tables']['group_members']['Insert']
+  const memberInsert: GroupMemberInsert = {
+    group_id: typedGroup.id,
+    email,
+    first_name: firstName,
+  }
+  
+  const { error: memberError } = await (supabase
+    .from('group_members') as any)
+    .insert(memberInsert)
   
   if (memberError) {
     throw new Error(`Failed to join group: ${memberError.message}`)
   }
   
-  return { group, isNewMember: true }
+  return { group: typedGroup, isNewMember: true }
 }
 
 /**

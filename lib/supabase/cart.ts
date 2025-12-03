@@ -18,18 +18,22 @@ export interface AddToCartParams {
 export async function addToCart(params: AddToCartParams) {
   const supabase = createClient()
   
-  const { error } = await supabase
-    .from('cart_items')
-    .insert({
-      group_id: params.groupId,
-      added_by_email: params.addedByEmail,
-      added_by_name: params.addedByName,
-      item_name: params.itemName,
-      item_description: params.itemDescription || null,
-      quantity: params.quantity,
-      price: params.price,
-      special_instructions: params.specialInstructions || null,
-    })
+  type CartItemInsert = Database['public']['Tables']['cart_items']['Insert']
+  
+  const insertData: CartItemInsert = {
+    group_id: params.groupId,
+    added_by_email: params.addedByEmail,
+    added_by_name: params.addedByName,
+    item_name: params.itemName,
+    item_description: params.itemDescription || null,
+    quantity: params.quantity,
+    price: params.price,
+    special_instructions: params.specialInstructions || null,
+  }
+  
+  const { error } = await (supabase
+    .from('cart_items') as any)
+    .insert(insertData)
   
   if (error) {
     throw new Error(`Failed to add to cart: ${error.message}`)
@@ -42,6 +46,8 @@ export async function addToCart(params: AddToCartParams) {
 export async function getCartItems(groupId: string) {
   const supabase = createClient()
   
+  type CartItemRow = Database['public']['Tables']['cart_items']['Row']
+  
   const { data, error } = await supabase
     .from('cart_items')
     .select('*')
@@ -52,7 +58,7 @@ export async function getCartItems(groupId: string) {
     throw new Error(`Failed to get cart items: ${error.message}`)
   }
   
-  return data || []
+  return (data || []) as CartItemRow[]
 }
 
 /**
@@ -65,8 +71,8 @@ export async function updateCartItemQuantity(itemId: string, quantity: number) {
     return deleteCartItem(itemId)
   }
   
-  const { error } = await supabase
-    .from('cart_items')
+  const { error } = await (supabase
+    .from('cart_items') as any)
     .update({ quantity })
     .eq('id', itemId)
   
@@ -81,8 +87,8 @@ export async function updateCartItemQuantity(itemId: string, quantity: number) {
 export async function deleteCartItem(itemId: string) {
   const supabase = createClient()
   
-  const { error } = await supabase
-    .from('cart_items')
+  const { error } = await (supabase
+    .from('cart_items') as any)
     .delete()
     .eq('id', itemId)
   
@@ -97,8 +103,8 @@ export async function deleteCartItem(itemId: string) {
 export async function clearCart(groupId: string) {
   const supabase = createClient()
   
-  const { error } = await supabase
-    .from('cart_items')
+  const { error } = await (supabase
+    .from('cart_items') as any)
     .delete()
     .eq('group_id', groupId)
   

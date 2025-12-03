@@ -1,4 +1,5 @@
 import { createClient } from './client'
+import type { Database } from '@/types/database'
 
 /**
  * Set the restaurant for a group
@@ -6,12 +7,15 @@ import { createClient } from './client'
 export async function setGroupRestaurant(groupId: string, restaurantId: string, restaurantName: string) {
   const supabase = createClient()
   
-  const { error } = await supabase
-    .from('groups')
-    .update({
-      restaurant_id: restaurantId,
-      restaurant_name: restaurantName,
-    })
+  type GroupUpdate = Database['public']['Tables']['groups']['Update']
+  const updateData: GroupUpdate = {
+    restaurant_id: restaurantId,
+    restaurant_name: restaurantName,
+  }
+  
+  const { error } = await (supabase
+    .from('groups') as any)
+    .update(updateData)
     .eq('id', groupId)
   
   if (error) {
@@ -25,6 +29,8 @@ export async function setGroupRestaurant(groupId: string, restaurantId: string, 
 export async function getGroupRestaurant(groupId: string) {
   const supabase = createClient()
   
+  type GroupRow = Database['public']['Tables']['groups']['Row']
+  
   const { data, error } = await supabase
     .from('groups')
     .select('restaurant_id, restaurant_name')
@@ -35,8 +41,10 @@ export async function getGroupRestaurant(groupId: string) {
     throw new Error(`Failed to get restaurant: ${error.message}`)
   }
   
+  const typedData = data as Pick<GroupRow, 'restaurant_id' | 'restaurant_name'> | null
+  
   return {
-    restaurantId: data?.restaurant_id,
-    restaurantName: data?.restaurant_name,
+    restaurantId: typedData?.restaurant_id || null,
+    restaurantName: typedData?.restaurant_name || null,
   }
 }

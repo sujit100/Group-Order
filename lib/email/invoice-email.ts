@@ -95,7 +95,6 @@ export async function sendInvoiceEmail(invoiceData: InvoiceData): Promise<void> 
         {
           filename: `invoice-${invoiceData.orderId.slice(0, 8)}.pdf`,
           content: base64Pdf,
-          type: 'application/pdf',
         },
       ],
     })
